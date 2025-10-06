@@ -118,6 +118,8 @@ push();
 
    // HitBox(hand);
 
+
+
     /*
     Stop drawing on the hands here
     */
@@ -128,10 +130,13 @@ push();
   //------------------------------------------------------------
   //facePart
   // for loop to capture if there is more than one face on the screen. This applies the same process to all faces. 
+   
   for (let i = 0; i < faces.length; i++) {
+
+    console.log("Breaks before let");
     let face = faces[i]; // face holds all the keypoints of the face
     
-
+    console.log("Breaks before keypoints");
 
     if (showKeypoints) {
       drawPoints(face)
@@ -153,7 +158,7 @@ push();
     */
     ////FACE////
     
-
+console.log("Breaks before functions");
     checkIfMouthOpen(face);
     if (isMouthOpen) {
       text("blah blah", face.keypoints[287].x, face.keypoints[287].y)
@@ -183,6 +188,8 @@ push();
    //drawHouse(face);
     // fill(225, 225, 0);
     // ellipse(leftEyeCenterX, leftEyeCenterY, leftEyeWidth, leftEyeHeight);
+
+   console.log("Breaks before drawpoints");
 
     drawPoints(face.leftEye);
     drawPoints(face.leftEyebrow);
