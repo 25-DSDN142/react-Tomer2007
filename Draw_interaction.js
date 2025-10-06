@@ -1,11 +1,25 @@
 // ----=  HANDS  =----
 function prepareInteraction() {
   //bgImage = loadImage('/images/background.png');
-  Background1active = false;
-  rightheadanim = 0;
-  leftheadanim = 0;
+  let Background1active;
+
+  let rightheadanim;
+  let leftheadanim;
+ 
+  let handedness;
+
+
+  let isFrowning;
+  
+
+  
 }
 
+  let leftHandHealth = 10;
+  let rightHandHealth = 100;
+  
+  let distance;
+  let d;
     
 
 function drawInteraction(faces, hands) {
@@ -24,6 +38,7 @@ function drawInteraction(faces, hands) {
       drawPoints(hand)
       drawConnections(hand)
     }
+    
     
     handedness = hand.handedness;
     // console.log(hand);
@@ -44,8 +59,7 @@ function drawInteraction(faces, hands) {
     let middleFingerDipY = hand.middle_finger_dip.y;
     let pinkyFingerMcpX = hand.pinky_finger_mcp.x;
     let pinkyFingerMcpY = hand.pinky_finger_mcp.y;
-    let thumbCmcX = hand.thumb_cmc.x;
-    let middleFingerDipZ = hand.middle_finger_dip.z3D;
+
     
     let middleFingerMcpX = hand.middle_finger_mcp.x;
     let middleFingerMcpY = hand.middle_finger_mcp.y; 
@@ -61,7 +75,9 @@ let RotationAmount;
 let dy = (middleFingerMcpY - wristY);
 let dx = (middleFingerMcpX - wristX);
 
-RotationAmount = Math.atan2(dy, dx);
+  
+
+ RotationAmount = Math.atan2(dy, dx);
 
     /*
     Start drawing on the hands here
@@ -69,14 +85,16 @@ RotationAmount = Math.atan2(dy, dx);
     PuppetBody(hand);
     
 push();
+  
+
     translate(middleFingerDipX, middleFingerDipY);
     rotate(RotationAmount);
     fill(255);
     if (handedness === "Right"){
-    ellipse(rightheadanim, rightheadanim, 100*(distance*0.01), 200*(distance*0.01));
+    ellipse(0, 0, 100*(distance*0.01), 200*(distance*0.01));
     }
     if (handedness === "Left"){
-    ellipse(leftheadanim, leftheadanim, 100*(distance*0.01), 200*(distance*0.01));
+    ellipse(0, 0, 100*(distance*0.01), 200*(distance*0.01));
     }
 
 
@@ -91,19 +109,14 @@ push();
     PuppetArmThumb(hand);
     PuppetArmPinky(hand);
 
-    if (isFrowning) {
-      frowningPuppet(hand);
-    }
-    if (isSmiling) {
-      smilingPuppet(hand);
-    }
-
-    leftHandHealth = 100;
-    rightHandHealth = 100;
+ 
+   
 
     puppetBlockInteraction(hand);
     
-    HealthBars();
+    HealthBars(rightHandHealth, leftHandHealth);
+
+   // HitBox(hand);
 
     /*
     Stop drawing on the hands here
@@ -117,11 +130,13 @@ push();
   // for loop to capture if there is more than one face on the screen. This applies the same process to all faces. 
   for (let i = 0; i < faces.length; i++) {
     let face = faces[i]; // face holds all the keypoints of the face
+    
+
 
     if (showKeypoints) {
       drawPoints(face)
     }
-    // console.log(face);
+     console.log(face);
     /*
     Once this program has a face, it knows some things about it.
     This includes how to draw a box around the face, and an oval. 
@@ -137,6 +152,8 @@ push();
     Start drawing on the face here
     */
     ////FACE////
+    
+
     checkIfMouthOpen(face);
     if (isMouthOpen) {
       text("blah blah", face.keypoints[287].x, face.keypoints[287].y)
@@ -147,6 +164,14 @@ push();
 
     checkIsFrowning(face);
    
+  if (isFrowning) {
+      frowningPuppet(hand);
+    }
+  if (isSmiling) {
+      smilingPuppet(hand);
+    }
+
+
 
    checkIsAngry(face);
    if (isAngry){
@@ -170,7 +195,7 @@ push();
 
   }
   //------------------------------------------------------
-  // You can make addtional elements here, but keep the face drawing inside the for loop. 
+  
 }
 
 
@@ -317,6 +342,7 @@ function checkIsFrowning(face) {
   let rightOuterLipY = face.keypoints[61].y;
   // ellipse(lowerLip.x,lowerLip.y,20)
   // ellipse(upperLip.x,upperLip.y,20)
+  console.log ("isFrowning");
 
     if (rightOuterLipY > middleLowerLipY && leftOuterLipY > middleLowerLipY) {
       isFrowning = true;
@@ -361,8 +387,6 @@ function frowningPuppet(hand) {
     let indexFingerDipY = hand.index_finger_dip.y;
     let ringFingerDipX = hand.ring_finger_dip.x;
     let ringFingerDipY = hand.ring_finger_dip.y;
-    let indexFingerMcpX = hand.index_finger_mcp.x
-    let pinkyFingerMcpX = hand.pinky_finger_mcp.x;
 
     noFill();
     curve(indexFingerDipX, indexFingerDipY+distance*2, indexFingerTipX, indexFingerTipY+0.4*distance, ringFingerTipX, ringFingerTipY+0.4*distance, ringFingerDipX, ringFingerDipY+distance*2);
@@ -378,8 +402,6 @@ function smilingPuppet(hand) {
     let indexFingerDipY = hand.index_finger_dip.y;
     let ringFingerDipX = hand.ring_finger_dip.x;
     let ringFingerDipY = hand.ring_finger_dip.y;
-    let indexFingerMcpX = hand.index_finger_mcp.x
-    let pinkyFingerMcpX = hand.pinky_finger_mcp.x;
 
     noFill();
     curve(indexFingerDipX, indexFingerDipY-distance*0.4, indexFingerTipX, indexFingerTipY+distance*0.4, ringFingerTipX, ringFingerTipY+distance*0.4, ringFingerDipX, ringFingerDipY-distance*0.4);
@@ -425,21 +447,21 @@ function Background1(){
   
 }
 
-function HealthBars() {
+function HealthBars(rightHandHealth, leftHandHealth) {
   fill(209, 48, 48);
   rect(20, 10, 5*rightHandHealth, 50);
   fill(48, 96, 209);
   rect(660, 10, 5*leftHandHealth, 50);
 
-  if (rightHandHealth <= 1){
+  if (rightHandHealth < 1){
     rightheadanim = rightheadanim - 3;
   }
-  if (leftHandHealth <= 1){
+  if (leftHandHealth < 1){
     leftheadanim = leftheadanim - 3;
   }
 }
 
-function HitBox () {
+function HitBox (hand) {
   let middleFingerDipX = hand.middle_finger_dip.x;
   let middleFingerDipY = hand.middle_finger_dip.y;
   
@@ -448,6 +470,8 @@ function HitBox () {
   var rBoxY = middleFingerDipY;
   var rBoxW = 15;
   var rBoxH = 13;
+
+  rect(rBoxX, rBoxY, rBoxW, rBoxH);
   }
 }
 
