@@ -1,4 +1,4 @@
-let Background1active = false;
+let background1 = true;
 let rightheadanim = 0;
 let leftheadanim = 0;
 let handedness;
@@ -12,8 +12,54 @@ let isAngry = false;
 // Hand tracking
 let leftHandHealth = 100;
 let rightHandHealth = 100;
+let blockIFrames = 0;
+let rightFullBlockHB = 1;
+let leftFullBlockHB = 1;
+let leftDamageMulti = 1;
+let rightDamageMulti = 1;
+let leftIsRaging = false;
+let rightIsRaging = false;
+
 let distance;
 let d;
+
+let rightGloveColour;
+let leftGloveColour;
+
+let rightEyeColour;
+let leftEyeColour;
+
+let leftChargingAttack = false;  
+let rightChargingAttack = false;  
+
+let Rdistance;
+let RightStartingLocationX;
+let RightStartingLocationY;
+let RightBallSize;
+let firingBallRight = false;
+let RightTargetX;
+let RightTargetY;  
+let RightBallX; 
+let RightBallY;
+let rightBallTimer;
+
+let rightHasGottenStart = true;
+
+let Ldistance;
+let LeftStartingLocationX;
+let LeftStartingLocationY;
+let LeftBallSize;
+let firingBallLeft = false;
+let LeftTargetX;
+let LeftTargetY;  
+let LeftBallX; 
+let LeftBallY;
+let leftBallTimer;
+
+let leftHasGottenStart = true;
+
+//gif fixes
+let activeImpacts = [];
 
 // Hand positions for interaction
 let leftThumbTipX = 0;
@@ -35,15 +81,38 @@ let rightHeadY = 0;
 let noseTipY = 0;
 let noseTipX = 0;
 
+let cloudX1 = 0;
+let cloudX2 = 0;
+
+let whatGesture; 
+
+let fightingGame = false;
+
 function prepareInteraction() {
-  //bgImage = loadImage('/images/background.png');
-  punchImpactImage = loadImage('/images/PunchImpact.gif');
+  punchImpactImage = loadImage('/images/NewPunchImpact.gif');
   headImpactImage = loadImage('/images/Head_hit.gif');
+  explosionImage = loadImage('/images/Explosion.gif');
+  boxingRing = loadImage('/images/boxingRing.png');
+
+  rightEyeColour = color(0,0,0);
+  leftEyeColour = color(0,0,0);
 }
 
 function drawInteraction(faces, hands) {
-  //Background1()
+  if (key == 'f'){
+    fightingGame = true;
+  }
+  if (key == 'b'){
+    background1 = false;
+  }
   
+  if (background1 === true){
+    Background1();
+  }
+
+  if (fightingGame === true){
+  image(boxingRing, 50, 363, 1180, 860);
+  }
   // ----=  HANDS PART  =----
   for (let i = 0; i < hands.length; i++) {
     let hand = hands[i];
@@ -55,17 +124,15 @@ function drawInteraction(faces, hands) {
     
     handedness = hand.handedness;
 
+    let whatGesture = detectHandGesture(hand);
+
     // Get hand keypoints
     let indexFingerTipX = hand.index_finger_tip.x;
     let indexFingerTipY = hand.index_finger_tip.y;
-    let indexFingerMcpX = hand.index_finger_mcp.x;
-    let indexFingerMcpY = hand.index_finger_mcp.y;
     let ringFingerTipX = hand.ring_finger_tip.x;
     let ringFingerTipY = hand.ring_finger_tip.y;
     let middleFingerDipX = hand.middle_finger_dip.x;
     let middleFingerDipY = hand.middle_finger_dip.y;
-    let pinkyFingerMcpX = hand.pinky_finger_mcp.x;
-    let pinkyFingerMcpY = hand.pinky_finger_mcp.y;
     let middleFingerMcpX = hand.middle_finger_mcp.x;
     let middleFingerMcpY = hand.middle_finger_mcp.y; 
     let wristX = hand.wrist.x;
@@ -80,12 +147,20 @@ function drawInteraction(faces, hands) {
     let RotationAmount = Math.atan2(dy, dx);
 
     // Draw puppet parts
-    PuppetBody(hand);
-    
+    if (handedness === "Left"){
+    fill(100,20,20);
+    PuppetBody(hand, RotationAmount);
+    }
+    if (handedness === "Right"){
+        fill(20,20,100);
+        PuppetBody(hand, RotationAmount);
+    }
+
     push();
     translate(middleFingerDipX, middleFingerDipY);
     rotate(RotationAmount);
     fill(255);
+    stroke(0);
     if (handedness === "Left"){
     ellipse(leftheadanim, leftheadanim, 100*(distance*0.01), 200*(distance*0.01));
     }
@@ -94,17 +169,99 @@ function drawInteraction(faces, hands) {
     }
     pop();
 
-    fill(0, 0, 0);
+    if (handedness === "Left"){
+    fill(leftEyeColour);
+    stroke(leftEyeColour);
     ellipse(indexFingerTipX, indexFingerTipY, (distance*0.2), (distance*0.2));
     ellipse(ringFingerTipX, ringFingerTipY, (distance*0.2), (distance*0.2));
-
-    PuppetArmThumb(hand);
-    PuppetArmPinky(hand);
-    puppetBlockInteraction(hand);
+    }
+    if (handedness === "Right"){
+    fill(rightEyeColour);
+    stroke(rightEyeColour);
+    ellipse(indexFingerTipX, indexFingerTipY, (distance*0.2), (distance*0.2));
+    ellipse(ringFingerTipX, ringFingerTipY, (distance*0.2), (distance*0.2));
+    }
    
-    HitBox(hand);
+    if (handedness === "Left"){
+      if (whatGesture == "Block"){
+        leftFullBlockHB = 0;
+        leftGloveColour = color(156, 68, 65);
+        
+      }
+      else{
+        leftFullBlockHB = 1;
+        leftGloveColour = color(214, 46, 28);
+      }
+    }
+    if (handedness === "Right"){
+      if (whatGesture == "Block"){
+        rightFullBlockHB = 0;
+        rightGloveColour = color(65, 100, 156);
+      }
+      else{
+        rightFullBlockHB = 1;
+        rightGloveColour = color(67, 133, 240);
+      }
+    }
+
+    if (fightingGame === true){
+     if (handedness === "Left" && whatGesture == "Charge"){
+        console.log("Charging attack");
+        leftChargingAttack = true;
+        leftBallTimer = 0;
+        leftHasGottenStart = true; 
+      }
     
-    // Draw facial expressions on puppet (if face detected)
+     if (handedness === "Right" && whatGesture == "Charge"){
+        console.log("Charging attack");
+        rightChargingAttack = true;
+        rightBallTimer = 0;
+        rightHasGottenStart = true;
+      }
+    }
+
+    if (handedness === "Left"){
+      PuppetArmThumb(hand, leftGloveColour);
+      PuppetArmPinky(hand, leftGloveColour);
+    }
+    if (handedness === "Right"){
+      PuppetArmThumb(hand, rightGloveColour);
+      PuppetArmPinky(hand, rightGloveColour);
+    }
+
+  if (fightingGame === true){
+    if (rightChargingAttack === true){
+      RightBallAttack(hand);
+    }
+    if (leftChargingAttack === true){
+      LeftBallAttack(hand);
+    }
+    if (firingBallRight === true){  
+    FireBallR(RightBallSize, RightStartingLocationX, RightStartingLocationY, RightTargetX, RightTargetY, rightBallTimer);
+    }
+
+    if (firingBallLeft === true){  
+    FireBallL(LeftBallSize, LeftStartingLocationX, LeftStartingLocationY, LeftTargetX, LeftTargetY, leftBallTimer);
+    }
+    
+    HitBox(hand);
+    puppetBlockInteraction(hand);
+  }
+
+      // draw all active impacts
+    for (let i = activeImpacts.length - 1; i >= 0; i--) {
+      let impact = activeImpacts[i];
+      impact.timer++;
+
+      // Draw gif
+      image(impact.img, impact.x - impact.size / 2, impact.y - impact.size / 2, impact.size, impact.size);
+
+      // Once timer expires, remove it
+      if (impact.timer > impact.lifetime) {
+        activeImpacts.splice(i, 1);
+      }
+    }
+    // Draw facial expressions on puppet
     if (faces.length > 0) {
       if (isFrowning) {
         frowningPuppet(hand);
@@ -112,10 +269,26 @@ function drawInteraction(faces, hands) {
       if (isSmiling) {
         smilingPuppet(hand);
       }
+      if (isAngry) {
+        angryPuppet(hand, RotationAmount);
+      }
     }
   }
-  
+  if (fightingGame === true){
+  if (rightHandHealth > 1 || leftHandHealth > 1){
   HealthBars(rightHandHealth, leftHandHealth);
+  }
+  if (leftHandHealth < 1){
+        textSize(50);
+        fill(56, 104, 194);
+        text('Blue Wins!', 640, 250, 240,240);
+  }
+  if (rightHandHealth < 1){
+        textSize(50);
+        fill(181, 70, 62);
+        text('Red Wins!', 640, 250, 240,240);
+  }
+  }
 
   // ----=  FACE PART  =----
   for (let i = 0; i < faces.length; i++) {
@@ -137,29 +310,15 @@ function drawInteraction(faces, hands) {
     checkIsFrowning(face);
     checkIsAngry(face);
 
-    // Display mouth text if open
-    if (isMouthOpen && face.keypoints[287]) {
-      push();
-      fill(0);
-      textSize(16);
-      text("blah blah", face.keypoints[287].x, face.keypoints[287].y);
-      pop();
+    // Activate Rage mode when Mouth opens
+    if (isMouthOpen == true) {
+      if (rightHandHealth < 33){
+        rightRageMode();
+      }
+      if (leftHandHealth < 33){
+        leftRageMode();
+      }
     }
-
-    // Visual feedback for angry
-    if (isAngry) {
-      push();
-      fill(255, 0, 0, 100);
-      ellipse(500, 500, 200, 200);
-      pop();
-    }
-
-    // Draw face features if they exist
-    if (face.leftEye) drawPoints(face.leftEye);
-    if (face.leftEyebrow) drawPoints(face.leftEyebrow);
-    if (face.lips) drawPoints(face.lips);
-    if (face.rightEye) drawPoints(face.rightEye);
-    if (face.rightEyebrow) drawPoints(face.rightEyebrow);
   }
 }
 
@@ -177,37 +336,30 @@ function drawConnections(hand) {
   pop()
 }
 
-function pinchCircle(hand) {
-  let finger = hand.index_finger_tip;
-  let thumb = hand.thumb_tip;
+function PuppetBody(hand, rotationAmount) {
+  let middleFingerMcpX = hand.middle_finger_mcp.x;
+  let middleFingerMcpY = hand.middle_finger_mcp.y;
 
-  let centerX = (finger.x + thumb.x) / 2;
-  let centerY = (finger.y + thumb.y) / 2;
-  let pinch = dist(finger.x, finger.y, thumb.x, thumb.y);
-
-  fill(0, 255, 0, 200);
-  stroke(0);
-  strokeWeight(2);
-  circle(centerX, centerY, pinch);
-}
-
-function PuppetBody(hand) {
-  let indexFingerDipX = hand.index_finger_dip.x;
-  let indexFingerDipY = hand.index_finger_dip.y;
-  let ringFingerDipX = hand.ring_finger_dip.x;
-  let ringFingerDipY = hand.ring_finger_dip.y;
   let wristX = hand.wrist.x;
   let wristY = hand.wrist.y;
+ 
+  rectMode(CENTER);
+  push();
+  translate(wristX, wristY);
+  rotate(rotationAmount);
+  stroke(0);
+  rect(0,0, 1.3*distance,distance);
+  pop();
 
-  beginShape();
-  vertex(ringFingerDipX, ringFingerDipY);
-  vertex(indexFingerDipX, indexFingerDipY);
-  vertex(indexFingerDipX, wristY);
-  vertex(ringFingerDipX, wristY);
-  endShape();
+  push();
+  translate(middleFingerMcpX, middleFingerMcpY);
+  rotate(rotationAmount);
+  stroke(0);
+  rect(0,0, 1.2*distance,distance);
+  pop();
 }
 
-function PuppetArmThumb(hand) {
+function PuppetArmThumb(hand, GloveColour) {
   let thumbCmcX = hand.thumb_cmc.x;
   let thumbCmcY = hand.thumb_cmc.y;
   let thumbMcpX = hand.thumb_mcp.x;
@@ -223,14 +375,15 @@ function PuppetArmThumb(hand) {
   let shoulderX = (thumbCmcX + indexFingerMcpX) * 0.5;
 
   strokeWeight(10);
+  stroke(0);
   line(shoulderX, shoulderY, thumbMcpX, thumbMcpY);
   line(thumbMcpX, thumbMcpY, thumbIpX, thumbIpY);
   line(thumbIpX, thumbIpY, thumbTipX, thumbTipY);
-  fill(255);
+  fill(GloveColour);
   ellipse(thumbTipX, thumbTipY, 0.4*distance, 0.4*distance);
 }
 
-function PuppetArmPinky(hand) {
+function PuppetArmPinky(hand, GloveColour) {
   let pinkyFingerMcpX = hand.pinky_finger_mcp.x;
   let pinkyFingerMcpY = hand.pinky_finger_mcp.y;
   let pinkyFingerPipX = hand.pinky_finger_pip.x;
@@ -246,10 +399,11 @@ function PuppetArmPinky(hand) {
   let shoulderX = (pinkyFingerMcpX + ringFingerMcpX) * 0.5;
 
   strokeWeight(10);
+  stroke(0);
   line(shoulderX, shoulderY, pinkyFingerPipX, pinkyFingerPipY);
   line(pinkyFingerPipX, pinkyFingerPipY, pinkyFingerDipX, pinkyFingerDipY);
   line(pinkyFingerDipX, pinkyFingerDipY, pinkyFingerTipX, pinkyFingerTipY);
-  fill(255);
+  fill(GloveColour);
   ellipse(pinkyFingerTipX, pinkyFingerTipY, 0.4*distance, 0.4*distance);
 }
 
@@ -294,16 +448,6 @@ function checkIsAngry(face) {
   isAngry = (rightOuterBrowY < rightInnerBrowY && leftOuterBrowY < leftInnerBrowY);
 }
 
-function drawHouse(face) {
-  if (!face.keypoints || face.keypoints.length < 5) return;
-  
-  noseTipY = face.keypoints[4].y;
-  noseTipX = face.keypoints[4].x;
-  push();
-  rect(noseTipX, noseTipY, 300, 300);
-  pop();
-}
-
 function frowningPuppet(hand) {
   let indexFingerTipX = hand.index_finger_tip.x;
   let indexFingerTipY = hand.index_finger_tip.y;
@@ -336,8 +480,54 @@ function smilingPuppet(hand) {
   noFill();
   stroke(0);
   strokeWeight(10);
-  curve(indexFingerDipX, indexFingerDipY-distance*0.4, indexFingerTipX, indexFingerTipY+distance*0.4, ringFingerTipX, ringFingerTipY+distance*0.4, ringFingerDipX, ringFingerDipY-distance*0.4);
+  curve(indexFingerDipX, indexFingerDipY-distance*0.3, indexFingerTipX, indexFingerTipY+distance*0.3, ringFingerTipX, ringFingerTipY+distance*0.3, ringFingerDipX, ringFingerDipY-distance*0.3);
   pop();
+}
+
+function angryPuppet(hand, rotation) {
+  let indexFingerTipX = hand.index_finger_tip.x;
+  let indexFingerTipY = hand.index_finger_tip.y;
+  let ringFingerTipX = hand.ring_finger_tip.x;
+  let ringFingerTipY = hand.ring_finger_tip.y;
+  push();
+  fill(0);
+  stroke(0);
+  strokeWeight(10);
+  translate(indexFingerTipX, indexFingerTipY-0.2*distance);
+  if (handedness === "Left") {
+    rotate(rotation+70);
+  }
+  if (handedness === "Right") {
+    rotate(rotation-70);
+  }
+  rect(0, 0, 0.35*distance, 0.1*distance);
+  pop();
+
+  push();
+  fill(0);
+  stroke(0);
+  strokeWeight(10);
+  translate(ringFingerTipX, ringFingerTipY-0.2*distance);
+  if (handedness === "Left") {
+    rotate(rotation-70);
+  }
+  if (handedness === "Right") {
+    rotate(rotation+70);
+  }
+  rect(0, 0, 0.35*distance, 0.1*distance);
+  pop();
+}
+
+function rightRageMode(){
+  rightDamageMulti = 2;
+  rightEyeColour = color(48, 92, 227);
+  rightIsRaging = true;
+}
+
+function leftRageMode(){
+  leftDamageMulti = 2;
+  leftEyeColour = color(237, 53, 40);
+  leftIsRaging = true;
 }
 
 function puppetBlockInteraction(hand) {
@@ -360,25 +550,73 @@ function puppetBlockInteraction(hand) {
 
   if (leftThumbTipX < rightThumbTipX+0.4*distance && leftThumbTipY < rightThumbTipY+0.4*distance && leftThumbTipX > rightThumbTipX-0.4*distance && leftThumbTipY > rightThumbTipY-0.4*distance){
     image(punchImpactImage, leftThumbTipX-distance*0.5, leftThumbTipY-distance*0.5, distance, distance);
-    //ellipse(leftThumbTipX, leftThumbTipY, distance, distance);
-      console.log("BANG");
+    blockIFrames = 2;
   }
 
   if (leftPinkyTipX < rightPinkyTipX+0.4*distance && leftPinkyTipY < rightPinkyTipY+0.4*distance && leftPinkyTipX > rightPinkyTipX-0.4*distance && leftPinkyTipY > rightPinkyTipY-0.4*distance){
     image(punchImpactImage, leftPinkyTipX-distance*0.5, leftPinkyTipY-distance*0.5, distance, distance);
+    blockIFrames = 2;
   }
 
  if (leftThumbTipX < rightPinkyTipX+0.4*distance && leftThumbTipY < rightPinkyTipY+0.4*distance && leftThumbTipX > rightPinkyTipX-0.4*distance && leftThumbTipY > rightPinkyTipY-0.4*distance){
     fill(200,200,10);
     image(punchImpactImage, leftThumbTipX-distance*0.5, leftThumbTipY-distance*0.5, distance, distance);
-    //ellipse(leftThumbTipX, leftThumbTipY, distance, distance);
-      console.log("BANG");
+    blockIFrames = 2;
   }
 
   if (leftPinkyTipX < rightThumbTipX+0.4*distance && leftPinkyTipY < rightThumbTipY+0.4*distance && leftPinkyTipX > rightThumbTipX-0.4*distance && leftPinkyTipY > rightThumbTipY-0.4*distance){
-    image(punchImpactImage, rightThumbTipX-distance*0.5, rightThumbTipY-distance*0.5, distance, distance);
-    //ellipse(leftThumbTipX, leftThumbTipY, distance, distance);
-      console.log("BANG");
+    image(punchImpactImage, rightPinkyTipX-distance*0.5, rightPinkyTipY-distance*0.5, distance, distance);
+    blockIFrames = 2;
+  }
+
+  //ProjectileBlock
+ if (RightBallX < LeftBallX + LeftBallSize && RightBallY < LeftBallY + LeftBallSize && RightBallX > LeftBallX - LeftBallSize && RightBallY > LeftBallX - LeftBallSize){
+    fill(200,200,10);
+    if (LeftBallSize > RightBallSize && firingBallRight === true){
+    createImpact(RightBallX, RightBallY, RightBallSize*2, punchImpactImage, 30);
+    firingBallRight = false;
+    RightBallX = -3500;
+    }
+    if (RightBallSize > LeftBallSize && firingBallLeft === true){
+    createImpact(LeftBallX, LeftBallY, LeftBallSize*2, punchImpactImage, 30);
+    firingBallLeft = false;
+    LeftBallX = -3500;
+    }
+    
+  }
+
+  if (firingBallRight === true){
+  if (leftThumbTipX < RightBallX + RightBallSize*0.5 && leftThumbTipY < RightBallY + RightBallSize*0.5 && leftThumbTipX > RightBallX - RightBallSize*0.5 && leftThumbTipY > RightBallX - RightBallSize*0.5){
+    fill(200,200,10);
+    createImpact(leftThumbTipX, leftThumbTipY, RightBallSize, punchImpactImage, 30);
+    firingBallRight = false;
+    blockIFrames = 5;
+    RightBallX = -3500;
+  }
+  if (leftPinkyTipX < RightBallX + RightBallSize*0.5 && leftPinkyTipY < RightBallY + RightBallSize*0.5 && leftPinkyTipX > RightBallX - RightBallSize*0.5 && leftPinkyTipY > RightBallX - RightBallSize*0.5){
+    fill(200,200,10);
+    createImpact(leftPinkyTipX, leftPinkyTipY, RightBallSize, punchImpactImage, 30);
+    firingBallRight = false;
+    blockIFrames = 5;
+    RightBallX = -3500;
+  }
+}
+
+ if (firingBallLeft === true){
+  if (rightThumbTipX < LeftBallX + LeftBallSize*0.5 && rightThumbTipY < LeftBallY + LeftBallSize*0.5 && rightThumbTipX > LeftBallX - LeftBallSize*0.5 && rightThumbTipY > LeftBallX - LeftBallSize*0.5){
+    fill(200,200,10);
+    createImpact(rightThumbTipX, rightThumbTipY, LeftBallSize, punchImpactImage, 30);
+    firingBallLeft = false;
+    blockIFrames = 5;
+    LeftBallX = -3500;
+  }
+  if (rightPinkyTipX < LeftBallX + LeftBallSize && rightPinkyTipY < LeftBallY + LeftBallSize && rightPinkyTipX > LeftBallX - LeftBallSize && rightPinkyTipY > LeftBallX - LeftBallSize){
+    fill(200,200,10);
+    createImpact(rightPinkyTipX, rightPinkyTipY, LeftBallSize, punchImpactImage, 30);
+    firingBallLeft = false;
+    blockIFrames = 5;
+    LeftBallX = -3500;
+  }
   }
 
   fill(11, 162, 20);
@@ -389,27 +627,58 @@ function puppetBlockInteraction(hand) {
 }
 
 function Background1() {
-  if (Background1active === true) {
-    fill(255);
+   cloudX1 = cloudX1+ 0.5*(101 - leftHandHealth);
+   cloudX2 = cloudX2+ 0.5*(101 - rightHandHealth);
+   fill(71, 136, 186);
+    noStroke();
     rectMode(CENTER);
     rect(640, 480, 1280, 960);
+    fill(185, 186, 173);
+    ellipse(cloudX1, 140, 500, 180);
+    fill(226, 227, 218);
+    ellipse(cloudX1+50, 120, 400, 150);
+    ellipse(cloudX1+40, 95, 200, 200);
+
+    fill(185, 186, 173);
+    ellipse(cloudX2-200, 220, 400, 180);
+    fill(226, 227, 218);
+    ellipse(cloudX2-225, 210, 300, 160);
+    ellipse(cloudX2-210, 180, 180, 200);
+
+  while (cloudX1 > 1500){
+    cloudX1 = -80;
   }
+  
+  while (cloudX2 > 1500){
+    cloudX2 = -180;
+  }
+
+    fill(39, 71, 42);
+    ellipse(300, 610, 1100, 500);
+    ellipse(1000, 530, 1400, 500);
+    fill(60, 110, 65);
+    ellipse(100, 700, 1200, 400);
+    ellipse(1300, 600, 2000, 500);
+    fill(66, 130, 72);
+    ellipse(300, 900, 1400, 600);
+    ellipse(1210, 900, 1600, 800);
 }
 
 function HealthBars(rightHandHealth, leftHandHealth) {
   push();
+  stroke(0);
   fill(209, 48, 48);
-  rect(20, 10, 5*rightHandHealth, 50);
-  fill(48, 96, 209);
-  rect(660, 10, 5*leftHandHealth, 50);
+  rect(310, 40, 5.5*leftHandHealth, 50);
+  fill(100, 96, 209);
+  rect(960, 40, 5.5*rightHandHealth, 50);
   pop();
 
   if (rightHandHealth < 1) {
-    rightheadanim = rightheadanim + 5;
+    rightheadanim = rightheadanim + 7;
     rightHandHealth = 0;
   }
   if (leftHandHealth < 1) {
-    leftheadanim = leftheadanim - 5;
+    leftheadanim = leftheadanim - 7;
     leftHandHealth = 0;
   }
 }
@@ -436,24 +705,189 @@ if (hand.handedness === "Right") {
     rightHeadX = hand.middle_finger_dip.x;
     rightHeadY = hand.middle_finger_dip.y;
   }
+if (blockIFrames < 0 || rightIsRaging == true){
+  if (leftPinkyTipX < rightHeadX+0.8*distance*rightFullBlockHB && leftPinkyTipY < rightHeadY+0.3*distance*rightFullBlockHB && leftPinkyTipX > rightHeadX-0.8*distance*rightFullBlockHB && leftPinkyTipY > rightHeadY-0.3*distance*rightFullBlockHB){
+   createImpact(rightHeadX, rightHeadY, 2*distance, headImpactImage, 40);
+    rightHandHealth = rightHandHealth - 0.1*leftDamageMulti;
+  }
+  if (leftThumbTipX < rightHeadX+0.8*distance*rightFullBlockHB && leftThumbTipY < rightHeadY+0.3*distance*rightFullBlockHB && leftThumbTipX > rightHeadX-0.8*distance*rightFullBlockHB && leftThumbTipY > rightHeadY-0.3*distance*rightFullBlockHB){
+   createImpact(rightHeadX, rightHeadY, 2*distance, headImpactImage, 40);
+    rightHandHealth = rightHandHealth - 0.1*leftDamageMulti;
+  }
+    ////Ball Attack Right
+    if (firingBallRight == true){
+    if (RightBallX - RightBallSize*0.5 < leftHeadX+0.8*distance*leftFullBlockHB && RightBallY - RightBallSize*0.5 < leftHeadY+0.3*distance*leftFullBlockHB && RightBallX + RightBallSize*0.5 > leftHeadX-0.8*distance*leftFullBlockHB && RightBallY + RightBallSize*0.5 > leftHeadY-0.3*distance*leftFullBlockHB){
+      createImpact(RightBallX, RightBallY, RightBallSize*2, explosionImage, 75); 
+      leftHandHealth = leftHandHealth - 8*leftDamageMulti;
+      rightHasGottenStart = true;
+      RightBallX = 3500;
+      firingBallRight = false;
+    }
+  }
+}
 
-  if (leftPinkyTipX < rightHeadX+0.8*distance && leftPinkyTipY < rightHeadY+0.3*distance && leftPinkyTipX > rightHeadX-0.8*distance && leftPinkyTipY > rightHeadY-0.3*distance){
-    image(headImpactImage, leftPinkyTipX-distance*0.8, leftPinkyTipY-distance*0.8, distance, distance);
-    rightHandHealth = rightHandHealth - 0.1;
+if (blockIFrames < 0 || leftIsRaging == true){
+  if (rightPinkyTipX < leftHeadX+0.8*distance*leftFullBlockHB && rightPinkyTipY < leftHeadY+0.3*distance*leftFullBlockHB && rightPinkyTipX > leftHeadX-0.8*distance*leftFullBlockHB && rightPinkyTipY > leftHeadY-0.3*distance*leftFullBlockHB){
+   createImpact(leftHeadX, leftHeadY, 2*distance, headImpactImage, 40);
+    leftHandHealth = leftHandHealth - 0.1*rightDamageMulti;
   }
-  if (leftThumbTipX < rightHeadX+0.8*distance && leftThumbTipY < rightHeadY+0.3*distance && leftThumbTipX > rightHeadX-0.8*distance && leftThumbTipY > rightHeadY-0.3*distance){
-    image(headImpactImage, leftThumbTipX-distance*0.8, leftThumbTipY-distance*0.8, distance, distance);
-    rightHandHealth = rightHandHealth - 0.1;
+  if (rightThumbTipX < leftHeadX+0.8*distance*leftFullBlockHB && rightThumbTipY < leftHeadY+0.3*distance*leftFullBlockHB && rightThumbTipX > leftHeadX-0.8*distance*leftFullBlockHB && rightThumbTipY > leftHeadY-0.3*distance*leftFullBlockHB){
+    createImpact(leftHeadX, leftHeadY, 2*distance, headImpactImage, 40);
+    leftHandHealth = leftHandHealth - 0.1*rightDamageMulti;
   }
 
-  if (rightPinkyTipX < leftHeadX+0.8*distance && rightPinkyTipY < leftHeadY+0.3*distance && rightPinkyTipX > leftHeadX-0.8*distance && rightPinkyTipY > leftHeadY-0.3*distance){
-    image(headImpactImage, rightPinkyTipX-distance*0.8, rightPinkyTipY-distance*0.8, distance, distance);
-    leftHandHealth = leftHandHealth - 0.1;
+    ////Ball Attack Left
+    if (firingBallLeft == true){
+    if (LeftBallX - LeftBallSize*0.5 < rightHeadX+0.8*distance*rightFullBlockHB && LeftBallY - LeftBallSize*0.5 < rightHeadY+0.3*distance*rightFullBlockHB && LeftBallX + LeftBallSize*0.5 > rightHeadX-0.8*distance*rightFullBlockHB && LeftBallY + LeftBallSize*0.5 > rightHeadY-0.3*distance*rightFullBlockHB){
+      createImpact(LeftBallX, LeftBallY, LeftBallSize*2, explosionImage, 75);
+      rightHandHealth = rightHandHealth - 4*rightDamageMulti;
+      leftHasGottenStart = true;
+      LeftBallX = 3500;
+      firingBallLeft = false;
+    }
   }
-  if (rightThumbTipX < leftHeadX+0.8*distance && rightThumbTipY < leftHeadY+0.3*distance && rightThumbTipX > leftHeadX-0.8*distance && rightThumbTipY > leftHeadY-0.3*distance){
-    image(headImpactImage, rightThumbTipX-distance*0.8, rightThumbTipY-distance*0.8, distance, distance);
-    leftHandHealth = leftHandHealth - 0.1;
+}
+
+
+  blockIFrames = blockIFrames - 1;
+
+}
+
+function LeftBallAttack(hand)
+{
+  firingBallLeft = false;
+
+  if (handedness === "Right"){
+  LeftTargetX = hand.middle_finger_dip.x;
+  LeftTargetY = hand.middle_finger_dip.y;
   }
+
+  if (handedness === "Left"){
+  let finger = hand.pinky_finger_tip;
+  let thumb = hand.thumb_tip;
+
+  // Draw circles at finger positions
+  leftCenterX = (finger.x + thumb.x) / 2;
+  leftCenterY = (finger.y + thumb.y) / 2;
+  leftPinch = dist(finger.x, finger.y, thumb.x, thumb.y);
+
+  Ldistance = distance;
+  }
+
+  leftBallTimer = leftBallTimer + 1;
+  //  circle size controlled by "pinch" gesture
+  fill(181, 73, 65, 200);
+  stroke(0);
+  circle(leftCenterX, leftCenterY, leftPinch);
+
+  if (leftPinch > Ldistance) {
+    LeftStartingLocationX = leftCenterX;
+    LeftStartingLocationY = leftCenterY;
+    LeftBallSize = leftPinch+0.1*Ldistance*leftDamageMulti;
+    firingBallLeft = true;
+    leftChargingAttack = false;
+  }
+}
+
+function RightBallAttack(hand)
+{
+  firingBallRight = false;
+
+  if (handedness === "Left"){
+  RightTargetX = hand.middle_finger_dip.x;
+  RightTargetY = hand.middle_finger_dip.y;
+  }
+
+  if (handedness === "Right"){
+  let finger = hand.pinky_finger_tip;
+  let thumb = hand.thumb_tip;
+
+  rightCenterX = (finger.x + thumb.x) / 2;
+  rightCenterY = (finger.y + thumb.y) / 2;
+  rightPinch = dist(finger.x, finger.y, thumb.x, thumb.y);
+
+  Rdistance = distance;
+  }
+
+  rightBallTimer = rightBallTimer + 1.5;
+  fill(150, 210, 255, 200);
+  stroke(0);
+  circle(rightCenterX, rightCenterY, rightPinch);
+
+  if (rightPinch > Rdistance) {
+    RightStartingLocationX = rightCenterX;
+    RightStartingLocationY = rightCenterY;
+    RightBallSize = rightPinch+0.1*Rdistance*rightDamageMulti;
+    firingBallRight = true;
+    rightChargingAttack = false;
+  }
+}
+
+function FireBallL(LeftBallSize, StartX, StartY, TargetX, TargetY, LeftBallTimer){
+  if (leftHasGottenStart == true){
+  LeftBallX = StartX;
+  LeftBallY = StartY; 
+  LeftTargetX = TargetX;
+  LeftTargetY = TargetY;
+  LeftEaseMulti = LeftBallTimer;
+  
+  leftHasGottenStart = false; 
+  }
+
+  
+  let leftEasing = map(LeftEaseMulti, 0, 640, 0.001, 0.05);
+
+  let dx = LeftTargetX - LeftBallX;
+  let dy = LeftTargetY - LeftBallY;
+  LeftBallX += dx * leftEasing;
+  LeftBallY += dy * leftEasing;
+  if (LeftBallX < TargetX + 0.1*distance && LeftBallY < TargetY + 0.1*distance && LeftBallX > TargetX - 0.1*distance && LeftBallY > TargetY - 0.1*distance){
+    firingBallLeft = false;
+  }
+
+  stroke(255);
+  fill(220+leftEasing*2000, 63+leftEasing*2000, 52+leftEasing*2000);
+  circle(LeftBallX, LeftBallY, LeftBallSize+LeftEaseMulti*0.1);
+}
+
+function FireBallR(RightBallSize, StartX, StartY, TargetX, TargetY, RightBallTimer){
+  if (rightHasGottenStart == true){
+  RightBallX = StartX;
+  RightBallY = StartY; 
+  RightTargetX = TargetX;
+  RightTargetY = TargetY;
+  RightEaseMulti = RightBallTimer;
+  
+  console.log("Has gotten Start");
+  rightHasGottenStart = false; 
+  }
+
+  console.log(RightBallX);
+  
+  let rightEasing = map(RightEaseMulti, 0, 640, 0.001, 0.05);
+
+  let dx = RightTargetX - RightBallX;
+  let dy = RightTargetY - RightBallY;
+  RightBallX += dx * rightEasing;
+  RightBallY += dy * rightEasing;
+  if (RightBallX < TargetX + 0.1*distance && RightBallY < TargetY + 0.1*distance && RightBallX > TargetX - 0.1*distance && RightBallY > TargetY - 0.1*distance){
+    firingBallRight = false;
+  }
+
+  stroke(255);
+  fill(120+rightEasing*2000, 208+rightEasing*2000, 225+rightEasing*2000);
+  circle(RightBallX, RightBallY, RightBallSize+RightEaseMulti*0.1);
+}
+
+function createImpact(x, y, Size, Image, time) {
+  activeImpacts.push({
+    x: x,
+    y: y,
+    size: Size,
+    lifetime: time, // how many frames it stays visible (adjust for full gif duration)
+    timer: 0,
+    img: Image
+  });
 }
 
 function drawPoints(feature) {

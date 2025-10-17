@@ -6,6 +6,7 @@
 function prepareInteraction() {
   //bgImage = loadImage('/images/background.png');
 }
+let handedness;
 
 function drawInteraction(faces, hands) {
   // hands part
@@ -16,21 +17,25 @@ function drawInteraction(faces, hands) {
     if (showKeypoints) {
       drawConnections(hand)
     }
+    handedness = hand.handedness;
 
     let middleFingerMcpX = hand.middle_finger_mcp.x;
     let middleFingerMcpY = hand.middle_finger_mcp.y;
     /*
     Start drawing on the hands here
     */
+    fill(255);
+
 
     let whatGesture = detectHandGesture(hand)
-
+if (handedness === "Left"){
     if (whatGesture == "Peace") {
       fill(255, 38, 219) // pink
     }
     if (whatGesture == "Thumbs Up") {
       fill(255, 252, 48) // yellow
     }
+  }
 
 
     if (hand.handedness === "Right") {

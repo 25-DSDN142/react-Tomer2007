@@ -207,6 +207,24 @@ function detectHandGesture(hand) {
   if (indexUp && middleUp && ringDown && pinkyDown) {
     return "Peace";
   }
+
+  //Block detection
+  let blockIndexUp = hand.index_finger_tip.y < hand.index_finger_pip.y - 20;
+  let blockMiddleUp = hand.middle_finger_tip.y < hand.middle_finger_pip.y - 20;
+  let blockRingUp = hand.ring_finger_tip.y < hand.ring_finger_pip.y;
+  let blockPinkyDown = hand.pinky_finger_tip.y > hand.pinky_finger_pip.y;
+  let blockThumbDown = hand.thumb_tip.y > hand.middle_finger_mcp.y;  
+  
+  if (blockIndexUp && blockMiddleUp && blockRingUp && blockPinkyDown && blockThumbDown) {
+    return "Block";
+  }
+
+  //Charge detection
+  let ChargePinch = hand.thumb_tip.y < hand.pinky_finger_tip.y+15 && hand.thumb_tip.y > hand.pinky_finger_tip.y-15   &&    hand.thumb_tip.x < hand.pinky_finger_tip.x+15 && hand.thumb_tip.x > hand.pinky_finger_tip.x-15;
+  
+  if (ChargePinch) {
+    return "Charge";
+  }
   
   // Thumbs up detection
   let thumbUp = hand.thumb_tip.y < hand.thumb_ip.y - 20;
